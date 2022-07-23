@@ -53,6 +53,15 @@ function Echo(msg: Message, clientMsg: string) {
     msg.channel.send(clientMsg);
 
 }
+/** 定期發送訊息到特定頻道 */
+function Boardcast(msg: Message, clientMsg: string) {
+    if (!clientMsg) {
+        msg.channel.send("沒有輸入需要回傳內容!");
+        return;
+    }
+    msg.channel.send(clientMsg);
+
+}
 /** 創建文字頻道 */
 function CreateChannel(msg: Message, name: string) {
     if (!name) {
@@ -72,7 +81,8 @@ function CreateChannel(msg: Message, name: string) {
 /** 踢出 */
 function Kick(msg: Message) {
     const member = msg.mentions.members?.first();
-    if (!member) {
+    const checkBot = member.user.bot;
+    if (!member || checkBot) {
         msg.channel.send('請標註人員');
         return;
     }
@@ -80,14 +90,15 @@ function Kick(msg: Message) {
     msg.channel.send(`你踢出<@${member.id}>`);
 }
 
-/** 未完成 */
+/** 禁言一分鐘 */
 function Ban(msg: Message) {
     const member = msg.mentions.members?.first();
-    if (!member) {
+    const checkBot = member.user.bot;
+    if (!member || checkBot) {
         msg.channel.send('請標註人員');
         return;
     }
-    // member.ban()
-    // msg.channel.send(`你ban<@${member.id}>`);
+    member.timeout(1 * 60 * 1000);
+    msg.channel.send(`你禁言<@${member.id}>一分鐘!`);
 
 }
