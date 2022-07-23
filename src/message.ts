@@ -1,4 +1,5 @@
-import { Client, Message } from "discord.js";
+import { channel } from "diagnostics_channel";
+import { AwaitReactionsOptions, Client, Message } from "discord.js";
 import { ChannelTypes } from "discord.js/typings/enums";
 
 export default (client: Client): void => {
@@ -15,7 +16,6 @@ export default (client: Client): void => {
             const args = msg.content.slice(prefix.length).trim().split(/ +/g);
             const cmd = args.shift().toLowerCase();
             const clientMsg = args.join(" ");
-
             try {
                 const index = msg.content.indexOf(' ', prefix.length);
                 switch (cmd) {
@@ -25,6 +25,7 @@ export default (client: Client): void => {
                         break;
                     case 'boardcast':
                         // 定期發送訊息到特定頻道
+                        await Boardcast(msg, clientMsg, client);
                         break;
                     case 'text_channel':
                         await CreateChannel(msg, clientMsg)
@@ -53,13 +54,41 @@ function Echo(msg: Message, clientMsg: string) {
     msg.channel.send(clientMsg);
 
 }
-/** 定期發送訊息到特定頻道 */
-function Boardcast(msg: Message, clientMsg: string) {
+/** 發送訊息到特定頻道 */
+function Boardcast(msg: Message, clientMsg: string = null, client: Client) {
     if (!clientMsg) {
         msg.channel.send("沒有輸入需要回傳內容!");
         return;
     }
-    msg.channel.send(clientMsg);
+    msg.reply('確定在所有附屬服務器上廣播這條消息嗎？').then(confirmationMessage => {
+        const emojis = ['✅', '❌'];
+        for (const emoji of emojis) {
+            confirmationMessage.react(emoji);
+        }
+        const filter = (reaction, user) => {
+            console.log('there')
+            return emojis.includes(reaction.emoji.name) && user.id === msg.author.id;
+        };
+        confirmationMessage.awaitReactions({ filter, max: 1, time: 60000, errors: ['time'] }).then(reactions => {
+            const emoji = reactions.first().emoji.name;
+            console.log(emoji);
+            switch (emoji) {
+                case '✅':
+                    const channels = client.channels.cache
+                    console.log(channels)
+
+                    break;
+                case '❌':
+                    msg.reply('廣播中斷！');
+
+            }
+        })
+
+
+
+
+    });
+    // msg.channel.send(clientMsg);
 
 }
 /** 創建文字頻道 */
