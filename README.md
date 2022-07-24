@@ -1,5 +1,13 @@
 # Discord Bot
 
+## Running the app
+本專案有使用 env 存放 BOT_TOKEN
+```bash
+$ npm i
+$ npm run start:dev
+```
+
+
 ## 功能
 
 ### 回應相同訊息內容給使用者
@@ -59,3 +67,6 @@
 
 
 
+## Author
+
+- Author - [Chih Yi, Ko](https://github.com/KE-CY)
