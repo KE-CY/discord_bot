@@ -1,5 +1,4 @@
-import { channel } from "diagnostics_channel";
-import { AwaitReactionsOptions, Client, Message } from "discord.js";
+import { Client, Message, TextChannel } from "discord.js";
 import { ChannelTypes } from "discord.js/typings/enums";
 
 export default (client: Client): void => {
@@ -45,56 +44,50 @@ export default (client: Client): void => {
         }
     });
 };
+
+const errMsg = (msg: Message, content: string) => {
+    msg.channel.send(content);
+}
+
 /** 回傳相同訊息 */
 function Echo(msg: Message, clientMsg: string) {
     if (!clientMsg) {
-        msg.channel.send("沒有輸入需要回傳內容!");
+        errMsg(msg, "沒有輸入需要回傳內容!");
         return;
     }
     msg.channel.send(clientMsg);
-
 }
 /** 發送訊息到特定頻道 */
 function Boardcast(msg: Message, clientMsg: string = null, client: Client) {
-    if (!clientMsg) {
-        msg.channel.send("沒有輸入需要回傳內容!");
+    if (Array.from(msg.mentions.channels).length < 1) {
+        errMsg(msg, "沒有輸入要傳送的頻道!");
         return;
     }
+    const emojis = ['✅', '❌'];
     msg.reply('確定在所有附屬服務器上廣播這條消息嗎？').then(confirmationMessage => {
-        const emojis = ['✅', '❌'];
         for (const emoji of emojis) {
             confirmationMessage.react(emoji);
         }
         const filter = (reaction, user) => {
-            console.log('there')
             return emojis.includes(reaction.emoji.name) && user.id === msg.author.id;
         };
-        confirmationMessage.awaitReactions({ filter, max: 1, time: 60000, errors: ['time'] }).then(reactions => {
+        confirmationMessage.awaitReactions({ filter, max: 1, time: 60000, errors: ['time'] }).then(async reactions => {
             const emoji = reactions.first().emoji.name;
-            console.log(emoji);
             switch (emoji) {
                 case '✅':
-                    const channels = client.channels.cache
-                    console.log(channels)
-
+                    const channels = msg.mentions.channels.first() as TextChannel;
+                    channels.send(`頻道${msg.guild.name} 再 ${new Date().toLocaleString()}廣播內容:\n${clientMsg}`);
                     break;
                 case '❌':
                     msg.reply('廣播中斷！');
-
             }
         })
-
-
-
-
     });
-    // msg.channel.send(clientMsg);
-
 }
 /** 創建文字頻道 */
 function CreateChannel(msg: Message, name: string) {
     if (!name) {
-        msg.channel.send("沒有輸入需要頻道名稱!");
+        errMsg(msg, "沒有輸入需要頻道名稱!");
         return;
     }
     msg.guild.channels.create(name, {
@@ -110,9 +103,13 @@ function CreateChannel(msg: Message, name: string) {
 /** 踢出 */
 function Kick(msg: Message) {
     const member = msg.mentions.members?.first();
+    if (!member) {
+        errMsg(msg, '請標註人員');
+        return;
+    }
     const checkBot = member.user.bot;
-    if (!member || checkBot) {
-        msg.channel.send('請標註人員');
+    if (checkBot) {
+        errMsg(msg, '請標註人員');
         return;
     }
     member.kick()
@@ -122,9 +119,13 @@ function Kick(msg: Message) {
 /** 禁言一分鐘 */
 function Ban(msg: Message) {
     const member = msg.mentions.members?.first();
+    if (!member) {
+        errMsg(msg, '請標註人員');
+        return;
+    }
     const checkBot = member.user.bot;
-    if (!member || checkBot) {
-        msg.channel.send('請標註人員');
+    if (checkBot) {
+        errMsg(msg, '請標註人員');
         return;
     }
     member.timeout(1 * 60 * 1000);
